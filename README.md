@@ -118,4 +118,4 @@ vpn-protected-dashboard/
 ```
 
 ## License
-MIT
+MIT..
