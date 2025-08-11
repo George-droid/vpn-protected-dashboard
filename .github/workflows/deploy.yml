@@ -1,0 +1,104 @@
+name: 🚀 Deploy VPN Dashboard
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  DOCKER_IMAGE: yourusername/vpn-dashboard
+  VM_IP: 102.164.37.37
+  VM_USER: ubuntu
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔐 Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: 🐳 Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./app
+        push: true
+        tags: ${{ env.DOCKER_IMAGE }}:latest,${{ env.DOCKER_IMAGE }}:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+    - name: 📋 Generate deployment files
+      run: |
+        # Create .env file for deployment
+        echo "SERVERURL=${{ env.VM_IP }}" > .env
+        
+        # Update docker-compose.yml to use Docker Hub image
+        sed -i 's|build: ./app|image: ${{ env.DOCKER_IMAGE }}:latest|' docker-compose.yml
+        
+        # Create deployment package
+        tar -czf deploy-package.tar.gz \
+          docker-compose.yml \
+          .env \
+          deploy.sh \
+          setup-firewall.sh \
+          scripts/ \
+          wireguard/ \
+          README.md \
+          DEPLOYMENT.md
+
+    - name: 📦 Upload deployment package
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-package
+        path: deploy-package.tar.gz
+
+    - name: 🚀 Deploy to Ubuntu VM
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ env.VM_IP }}
+        username: ${{ env.VM_USER }}
+        key: ${{ secrets.VM_SSH_KEY }}
+        script: |
+          # Create deployment directory
+          mkdir -p ~/vpn-dashboard
+          cd ~/vpn-dashboard
+          
+          # Stop existing services if running
+          docker-compose down 2>/dev/null || true
+          
+          # Clean up old files
+          rm -rf *
+          
+          # Download and extract deployment package
+          curl -L -o deploy-package.tar.gz ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts
+          tar -xzf deploy-package.tar.gz
+          
+          # Make scripts executable
+          chmod +x deploy.sh setup-firewall.sh scripts/*.sh
+          
+          # Deploy services
+          ./deploy.sh
+          
+          # Configure firewall
+          sudo ./setup-firewall.sh
+          
+          # Show status
+          echo "🚀 Deployment complete!"
+          docker-compose ps
+          echo "🔐 WireGuard status:"
+          docker exec wireguard wg show
+          echo "📱 Client config available at:"
+          echo "cat ~/vpn-dashboard/wireguard/config/peer1/peer1.conf"
+
+    - name: ✅ Deployment Summary
+      run: |
+        echo "🎉 Deployment completed successfully!"
+        echo "🌐 Dashboard: http://${{ env.VM_IP }}:5000"
+        echo "🔐 WireGuard: ${{ env.VM_IP }}:51820"
+        echo "📱 Get client config from VM: cat ~/vpn-dashboard/wireguard/config/peer1/peer1.conf"
