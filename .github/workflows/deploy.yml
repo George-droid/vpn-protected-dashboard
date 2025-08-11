@@ -56,13 +56,16 @@ jobs:
         name: deployment-package
         path: deploy-package.tar.gz
 
+    - name: 🔑 Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
+        chmod 600 ~/.ssh/vm_key
+        ssh-keyscan -H ${{ env.VM_IP }} >> ~/.ssh/known_hosts
+
     - name: 🚀 Deploy to Ubuntu VM
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ env.VM_IP }}
-        username: ${{ env.VM_USER }}
-        key: ${{ secrets.VM_SSH_KEY }}
-        script: |
+      run: |
+        ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no ${{ env.VM_USER }}@${{ env.VM_IP }} << 'EOF'
           # Create deployment directory
           mkdir -p ~/vpn-dashboard
           cd ~/vpn-dashboard
@@ -93,10 +96,11 @@ jobs:
           docker exec wireguard wg show
           echo "📱 Client config available at:"
           echo "cat ~/vpn-dashboard/wireguard/config/peer1/peer1.conf"
+        EOF
 
     - name: ✅ Deployment Summary
       run: |
         echo "🎉 Deployment completed successfully!"
         echo "🌐 Dashboard: http://${{ env.VM_IP }}:5000"
         echo "🔐 WireGuard: ${{ env.VM_IP }}:51820"
-        echo "📱 Get client config from VM: cat ~/vpn-dashboard/wireguard/config/peer1/peer1.conf"
+        echo "📱 Get client config from VM: cat ~/vpn-dashboard/vpn-dashboard/wireguard/config/peer1/peer1.conf"
