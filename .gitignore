@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# WireGuard runtime config (contains keys)
+wireguard/config/
+
+# OS junk
+.DS_Store
+Thumbs.db

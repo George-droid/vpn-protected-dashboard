@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+  <section class="col-lg-6 connectedSortable">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-shield-alt mr-1"></i>Status</h3>
+      </div>
+      <div class="card-body">
+        <span class="badge badge-success">{{ status|upper }}</span>
+        <p class="text-muted mt-2 mb-0">This app is intended to be reachable only when connected to the VPN ({{ vpn_subnet }}). Locally it is open for development.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="col-lg-6 connectedSortable">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-heart mr-1"></i> Health API</h3>
+      </div>
+      <div class="card-body">
+        <a href="/api/health" target="_blank" class="btn btn-primary"><i class="fas fa-external-link-alt mr-1"></i> Open /api/health</a>
+        <pre class="mt-3 mb-0"><code>curl http://127.0.0.1:5050/api/health</code></pre>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="row">
+  <section class="col-lg-12 connectedSortable">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-project-diagram mr-1"></i> How this demo works</h3>
+      </div>
+      <div class="card-body">
+        <ul class="mb-0 text-muted">
+          <li>WireGuard runs in Docker on an Ubuntu server.</li>
+          <li>Flask app listens on port 5000.</li>
+          <li>UFW allows port 5000 only from {{ vpn_subnet }}.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+
