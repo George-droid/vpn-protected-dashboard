@@ -30,8 +30,6 @@ jobs:
         context: ./app
         push: true
         tags: ${{ env.DOCKER_IMAGE }}:latest,${{ env.DOCKER_IMAGE }}:${{ github.sha }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
 
     - name: 📋 Generate deployment files
       run: |
