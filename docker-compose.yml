@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   dashboard:
-    image: yourusername/vpn-dashboard:latest
+    image: georgitoo/vpn-dashboard:latest
     container_name: vpn-dashboard
     ports:
       - "5000:5000"

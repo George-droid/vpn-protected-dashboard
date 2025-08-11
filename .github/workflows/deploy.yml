@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_IMAGE: yourusername/vpn-dashboard
+  DOCKER_IMAGE: georgitoo/vpn-dashboard
   VM_IP: 102.164.37.37
   VM_USER: ubuntu
 
