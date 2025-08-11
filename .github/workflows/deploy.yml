@@ -62,10 +62,23 @@ jobs:
         echo "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/vm_key
         chmod 600 ~/.ssh/vm_key
         ssh-keyscan -H ${{ env.VM_IP }} >> ~/.ssh/known_hosts
+        
+        # Debug: Check key file
+        echo "🔍 SSH Key file info:"
+        ls -la ~/.ssh/vm_key
+        echo "🔍 SSH Key content (first few lines):"
+        head -n 3 ~/.ssh/vm_key
+        echo "🔍 SSH Key permissions:"
+        stat ~/.ssh/vm_key
 
     - name: 🚀 Deploy to Ubuntu VM
       run: |
-        ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no ${{ env.VM_USER }}@${{ env.VM_IP }} << 'EOF'
+        # Test SSH connection first
+        echo "🔍 Testing SSH connection..."
+        ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 -v ${{ env.VM_USER }}@${{ env.VM_IP }} "echo 'SSH connection successful'"
+        
+        # If SSH works, proceed with deployment
+        ssh -i ~/.ssh/vm_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 ${{ env.VM_USER }}@${{ env.VM_IP }} << 'EOF'
           # Create deployment directory
           mkdir -p ~/vpn-dashboard
           cd ~/vpn-dashboard
